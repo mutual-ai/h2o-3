@@ -1,5 +1,11 @@
 package water;
 
+import water.network.SSLContextException;
+import water.network.SSLSocketChannelFactory;
+
+import java.io.IOException;
+import java.nio.channels.ByteChannel;
+
 /**
  * Takes care of security.
  *
@@ -33,4 +39,28 @@ package water;
  *
  */
 public class SecurityManager {
+
+    public boolean securityEnabled = false;
+    private SSLSocketChannelFactory sslSocketChannelFactory;
+
+    public SecurityManager() {
+        try {
+            if (H2O.ARGS.h2o_ssl_enabled) {
+                this.sslSocketChannelFactory = new SSLSocketChannelFactory();
+                this.securityEnabled = true;
+            }
+        } catch (SSLContextException e) {
+            // TODO log
+            // Should we instead fail the node init?
+            H2O.ARGS.h2o_ssl_enabled = false;
+        }
+    }
+
+    public ByteChannel wrapServerChannel(ByteChannel channel) throws IOException {
+        return sslSocketChannelFactory.wrapServerChannel(channel);
+    }
+
+    public ByteChannel wrapClientChannel(ByteChannel channel, String host, int port) throws IOException {
+        return sslSocketChannelFactory.wrapClientChannel(channel, host, port);
+    }
 }

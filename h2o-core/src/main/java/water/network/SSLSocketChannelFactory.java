@@ -14,15 +14,14 @@ public class SSLSocketChannelFactory {
 
     private SSLContext sslContext = null;
 
-    public SSLSocketChannelFactory() throws
-            NoSuchAlgorithmException,
-            KeyManagementException,
-            UnrecoverableKeyException,
-            CertificateException,
-            KeyStoreException,
-            IOException {
-        this.sslContext = SSLContext.getDefault();
-        this.sslContext.init(keyManager(), trustManager(), null);
+    public SSLSocketChannelFactory() throws SSLContextException {
+        try {
+            this.sslContext = SSLContext.getDefault();
+            this.sslContext.init(keyManager(), trustManager(), null);
+        } catch (NoSuchAlgorithmException | IOException | UnrecoverableKeyException | KeyStoreException | KeyManagementException | CertificateException e) {
+            // TODO log
+            throw new SSLContextException("Failed to initialized SSL context.", e);
+        }
     }
 
     private TrustManager[] trustManager() throws
@@ -47,22 +46,18 @@ public class SSLSocketChannelFactory {
         return kmf.getKeyManagers();
     }
 
-    public SSLSocketChannelFactory(
-            KeyManager[] keyManagers,
-            TrustManager[] trustManagers) throws NoSuchAlgorithmException, KeyManagementException {
-        this.sslContext = SSLContext.getDefault();
-        this.sslContext.init(keyManagers, trustManagers, null);
+    public ByteChannel wrapClientChannel(
+            ByteChannel channel,
+            String host,
+            int port) throws IOException {
+        SSLEngine sslEngine = sslContext.createSSLEngine(host, port);
+        sslEngine.setUseClientMode(false);
+        return new SSLSocketChannel(channel, sslEngine);
     }
 
-    public ByteChannel wrapChannel(SocketChannel sc, boolean clientMode) throws ChannelWrapException {
+    public ByteChannel wrapServerChannel(ByteChannel channel) throws IOException {
         SSLEngine sslEngine = sslContext.createSSLEngine();
-        sslEngine.setUseClientMode(clientMode);
-        try {
-            return new SSLSocketChannel(sc, sslEngine);
-        } catch (IOException e) {
-            // TODO log
-            throw new ChannelWrapException("Failed to wrap socket channel.", e);
-        }
+        sslEngine.setUseClientMode(true);
+        return new SSLSocketChannel(channel, sslEngine);
     }
-
 }

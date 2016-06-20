@@ -2,12 +2,10 @@ package water.network;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.nio.channels.SocketChannel;
 
 /**
  * This class is based on:
@@ -31,14 +29,14 @@ public class SSLSocketChannel implements ByteChannel {
     private ByteBuffer myAppData;
     private ByteBuffer peerAppData;
 
-    private SocketChannel sc = null;
+    private ByteChannel channel = null;
     private SSLEngine sslEngine = null;
 
     private boolean closing = false;
     private boolean closed = false;
 
-    public SSLSocketChannel(SocketChannel sc, SSLEngine sslEngine) throws IOException {
-        this.sc = sc;
+    public SSLSocketChannel(ByteChannel channel, SSLEngine sslEngine) throws IOException {
+        this.channel = channel;
         this.sslEngine = sslEngine;
 
         sslEngine.setEnableSessionCreation(true);
@@ -50,7 +48,7 @@ public class SSLSocketChannel implements ByteChannel {
 
     @Override
     public boolean isOpen() {
-        return sc.isOpen();
+        return channel.isOpen();
     }
 
     @Override
@@ -65,12 +63,12 @@ public class SSLSocketChannel implements ByteChannel {
             sslEngine.wrap(myAppData, netOutBuffer);
 
             while(netOutBuffer.hasRemaining()) {
-                sc.write(netOutBuffer);
+                channel.write(netOutBuffer);
                 netOutBuffer.compact();
             }
         }
 
-        sc.close();
+        channel.close();
         closed = true;
     }
 
@@ -99,11 +97,11 @@ public class SSLSocketChannel implements ByteChannel {
             switch(hs){
                 case NEED_WRAP : {
                     myAppData.clear();
-                    sc.write(wrap(emptyBuffer));
+                    channel.write(wrap(emptyBuffer));
                 }
                 case NEED_UNWRAP:
                     netInBuffer.clear();
-                    if(sc.read(netInBuffer) > 1) {
+                    if(channel.read(netInBuffer) > 1) {
                         unwrap(peerAppData);
                     }
                     break;
@@ -132,7 +130,7 @@ public class SSLSocketChannel implements ByteChannel {
     public int read(ByteBuffer dst) throws IOException {
         if (closing || closed) return -1;
 
-        int read = sc.read(netInBuffer);
+        int read = channel.read(netInBuffer);
 
         if (read == -1 || read == 0) {
             return read;
@@ -209,7 +207,7 @@ public class SSLSocketChannel implements ByteChannel {
             return 0;
         }
 
-        return sc.write(wrap(src));
+        return channel.write(wrap(src));
     }
 
     private synchronized ByteBuffer wrap(ByteBuffer src) throws IOException {
@@ -222,7 +220,7 @@ public class SSLSocketChannel implements ByteChannel {
     private boolean flush(ByteBuffer buf) throws IOException {
         int remaining = buf.remaining();
         if ( remaining > 0 ) {
-            int written = sc.write(buf);
+            int written = channel.write(buf);
             return written >= remaining;
         }else {
             return true;
