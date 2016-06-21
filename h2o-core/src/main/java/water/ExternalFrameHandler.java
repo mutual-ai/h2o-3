@@ -27,8 +27,10 @@ public class ExternalFrameHandler {
     public static final int TYPE_STR = 2;
     public static final int TYPE_NA = 3;
 
-    public void process(AutoBuffer ab, SocketChannel sock) {
-        ab.getPort(); // skip 2 bytes for port set by ab.putUdp ( which is zero anyway because the request came from non-h2o node)
+    public static void process(AutoBuffer ab, SocketChannel sock) {
+        // skip 2 bytes for port set by ab.putUdp. The port is
+        // is zero anyway because the request came from non-h2o node and zero is default value
+        ab.getPort();
 
         int requestType = ab.getInt();
         switch (requestType) {
@@ -42,7 +44,7 @@ public class ExternalFrameHandler {
     }
 
 
-    private void handleDownloadFrame(AutoBuffer recvAb, SocketChannel sock) {
+    private static void handleDownloadFrame(AutoBuffer recvAb, SocketChannel sock) {
         String frame_key = recvAb.getStr();
         int chunk_id = recvAb.getInt();
 
@@ -81,7 +83,7 @@ public class ExternalFrameHandler {
         }
     }
 
-    private void handleCreateFrame(AutoBuffer ab) {
+    private static void handleCreateFrame(AutoBuffer ab) {
         NewChunk[] nchnk = null;
         int requestType;
         do {
@@ -120,7 +122,7 @@ public class ExternalFrameHandler {
         } while (requestType != CLOSE_NEW_CHUNK);
     }
 
-    private void writeToChannel(AutoBuffer ab, SocketChannel channel) {
+    private static void writeToChannel(AutoBuffer ab, SocketChannel channel) {
         try {
             ab._bb.flip();
             while (ab._bb.hasRemaining()) {
@@ -131,7 +133,7 @@ public class ExternalFrameHandler {
         }
     }
 
-    private String getStringFromChunk(Chunk[] chks, int columnNum, int rowIdx) {
+    private static String getStringFromChunk(Chunk[] chks, int columnNum, int rowIdx) {
         if (chks[columnNum].vec().isCategorical()) {
             return chks[columnNum].vec().domain()[(int) chks[columnNum].at8(rowIdx)];
         } else if (chks[columnNum].vec().isString()) {
@@ -148,8 +150,6 @@ public class ExternalFrameHandler {
     }
 
 
-
-    // ---
     // Handle the remote-side incoming UDP packet.  This is called on the REMOTE
     // Node, not local.  Wrong thread, wrong JVM.
     static class Adder extends UDP {
