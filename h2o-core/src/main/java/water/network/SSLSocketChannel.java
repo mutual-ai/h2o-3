@@ -18,9 +18,6 @@ import java.nio.channels.SocketChannel;
  */
 public class SSLSocketChannel implements ByteChannel {
 
-    // Empty buffer used during SSL/TLS handshake
-    private static ByteBuffer emptyBuffer = ByteBuffer.allocate(0);
-
     // Buffers holding encrypted data
     private ByteBuffer netInBuffer;
     private ByteBuffer netOutBuffer;
@@ -89,22 +86,29 @@ public class SSLSocketChannel implements ByteChannel {
     // HANDSHAKE
     // -----------------------------------------------------------
 
+    SSLEngineResult.HandshakeStatus hs;
+
     private void handshake() throws IOException {
         sslEngine.beginHandshake();
-        SSLEngineResult.HandshakeStatus hs = sslEngine.getHandshakeStatus();
+
+        hs = sslEngine.getHandshakeStatus();
 
         while(hs != SSLEngineResult.HandshakeStatus.FINISHED &&
                 hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
             switch(hs){
                 case NEED_WRAP : {
                     myAppData.clear();
-                    channel.write(wrap(emptyBuffer));
+                    channel.write(wrap(myAppData));
+                    break;
                 }
                 case NEED_UNWRAP:
                     netInBuffer.clear();
-                    if(channel.read(netInBuffer) > 1) {
+                    if(channel.read(netInBuffer) > -1) {
                         unwrap(peerAppData);
+                    } else{
+                        System.out.println("for debug");
                     }
+
                     break;
                 // SSL needs to perform some delegating tasks before it can continue.
                 // Those tasks will be run in the same thread and can be blocking.
@@ -131,21 +135,18 @@ public class SSLSocketChannel implements ByteChannel {
     public int read(ByteBuffer dst) throws IOException {
         if (closing || closed) return -1;
 
-        int read = channel.read(netInBuffer);
-
-        if (read == -1 || read == 0) {
-            return read;
-        } else {
-            return unwrap(dst);
-        }
+        channel.read(netInBuffer);
+        return unwrap(dst);
     }
 
     private synchronized int unwrap(ByteBuffer dst) throws IOException {
+        int remaining;
         int read = 0;
         SSLEngineResult unwrapResult;
         peerAppData.clear();
 
-        while(netInBuffer.hasRemaining()) {
+        do {
+            remaining = netInBuffer.remaining();
             netInBuffer.flip();
 
             unwrapResult = sslEngine.unwrap(netInBuffer, dst);
@@ -193,7 +194,12 @@ public class SSLSocketChannel implements ByteChannel {
                 default:
                     throw new IOException("Failed to SSL unwrap with status " + unwrapResult.getStatus());
             }
-        }
+        } while(
+                unwrapResult.getStatus() == SSLEngineResult.Status.OK &&
+                (remaining != netInBuffer.remaining() || sslEngine.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_UNWRAP)
+                );
+
+        hs = unwrapResult.getHandshakeStatus();
 
         return read;
     }
@@ -213,7 +219,8 @@ public class SSLSocketChannel implements ByteChannel {
 
     private synchronized ByteBuffer wrap(ByteBuffer src) throws IOException {
         netOutBuffer.clear();
-        sslEngine.wrap(src, netOutBuffer);
+        SSLEngineResult wrapResult = sslEngine.wrap(src, netOutBuffer);
+        hs = wrapResult.getHandshakeStatus();
         netOutBuffer.flip();
         return netOutBuffer;
     }

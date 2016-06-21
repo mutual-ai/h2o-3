@@ -1,6 +1,7 @@
 package water.network;
 
 import water.H2O;
+import water.util.Log;
 
 import javax.net.ssl.*;
 import java.io.FileInputStream;
@@ -16,10 +17,10 @@ public class SSLSocketChannelFactory {
 
     public SSLSocketChannelFactory() throws SSLContextException {
         try {
-            this.sslContext = SSLContext.getDefault();
+            this.sslContext = SSLContext.getInstance("TLSv1.2");
             this.sslContext.init(keyManager(), trustManager(), null);
         } catch (NoSuchAlgorithmException | IOException | UnrecoverableKeyException | KeyStoreException | KeyManagementException | CertificateException e) {
-            // TODO log
+            Log.err("Failed to initialized SSL context.", e);
             throw new SSLContextException("Failed to initialized SSL context.", e);
         }
     }

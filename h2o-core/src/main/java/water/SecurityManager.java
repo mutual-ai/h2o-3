@@ -2,6 +2,7 @@ package water;
 
 import water.network.SSLContextException;
 import water.network.SSLSocketChannelFactory;
+import water.util.Log;
 
 import java.io.IOException;
 import java.nio.channels.ByteChannel;
@@ -51,7 +52,8 @@ public class SecurityManager {
                 this.securityEnabled = true;
             }
         } catch (SSLContextException e) {
-            // TODO log
+            Log.err("Node initialized with SSL enabled but failed to create SSLContext. " +
+                    "Node will run in nonSSL mode.", e);
             // Should we instead fail the node init?
             H2O.ARGS.h2o_ssl_enabled = false;
         }
