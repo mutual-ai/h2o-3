@@ -156,13 +156,5 @@ public class ExternalFrameHandler {
         AutoBuffer call(AutoBuffer ab) {
             throw H2O.fail();
         }
-
-        // Pretty-print bytes 1-15; byte 0 is the udp_type enum
-        @Override
-        String print16(AutoBuffer ab) {
-            int flag = ab.getFlag();
-            //String clazz = (flag == CLIENT_UDP_SEND) ? TypeMap.className(ab.getInt()) : "";
-            return "task# " + ab.getTask() + " ";//+ clazz+" "+COOKIES[flag-SERVER_UDP_SEND];
-        }
     }
 }
