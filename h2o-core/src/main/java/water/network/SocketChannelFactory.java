@@ -4,6 +4,7 @@ import water.SecurityManager;
 
 import java.io.IOException;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.SocketChannel;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -25,7 +26,7 @@ public class SocketChannelFactory {
 
     public ByteChannel serverChannel(ByteChannel channel) throws IOException {
         if(sm.securityEnabled && !(channel instanceof SSLSocketChannel)) {
-            return sm.wrapServerChannel(channel);
+            return sm.wrapServerChannel((SocketChannel)channel);
         } else {
             return channel;
         }
@@ -33,7 +34,7 @@ public class SocketChannelFactory {
 
     public ByteChannel clientChannel(ByteChannel channel, String host, int port) throws IOException {
         if(sm.securityEnabled && !(channel instanceof SSLSocketChannel)) {
-            return sm.wrapClientChannel(channel, host, port);
+            return sm.wrapClientChannel((SocketChannel)channel, host, port);
         } else {
             return channel;
         }

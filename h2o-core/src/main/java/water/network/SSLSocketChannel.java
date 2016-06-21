@@ -6,6 +6,7 @@ import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.SocketChannel;
 
 /**
  * This class is based on:
@@ -29,13 +30,13 @@ public class SSLSocketChannel implements ByteChannel {
     private ByteBuffer myAppData;
     private ByteBuffer peerAppData;
 
-    private ByteChannel channel = null;
+    private SocketChannel channel = null;
     private SSLEngine sslEngine = null;
 
     private boolean closing = false;
     private boolean closed = false;
 
-    public SSLSocketChannel(ByteChannel channel, SSLEngine sslEngine) throws IOException {
+    public SSLSocketChannel(SocketChannel channel, SSLEngine sslEngine) throws IOException {
         this.channel = channel;
         this.sslEngine = sslEngine;
 
@@ -237,5 +238,9 @@ public class SSLSocketChannel implements ByteChannel {
             r.run();
         }
         return sslEngine.getHandshakeStatus();
+    }
+
+    public SocketChannel channel() {
+        return channel;
     }
 }

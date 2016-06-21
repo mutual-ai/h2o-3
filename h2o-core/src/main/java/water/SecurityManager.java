@@ -5,6 +5,7 @@ import water.network.SSLSocketChannelFactory;
 
 import java.io.IOException;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.SocketChannel;
 
 /**
  * Takes care of security.
@@ -56,11 +57,11 @@ public class SecurityManager {
         }
     }
 
-    public ByteChannel wrapServerChannel(ByteChannel channel) throws IOException {
+    public ByteChannel wrapServerChannel(SocketChannel channel) throws IOException {
         return sslSocketChannelFactory.wrapServerChannel(channel);
     }
 
-    public ByteChannel wrapClientChannel(ByteChannel channel, String host, int port) throws IOException {
+    public ByteChannel wrapClientChannel(SocketChannel channel, String host, int port) throws IOException {
         return sslSocketChannelFactory.wrapClientChannel(channel, host, port);
     }
 }

@@ -27,6 +27,9 @@ public class SSLSocketChannelFactory {
     private TrustManager[] trustManager() throws
             KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
         KeyStore ksTrust = KeyStore.getInstance("JKS");
+
+        assert H2O.ARGS.h2o_ssl_trustStore != null && H2O.ARGS.h2o_ssl_trustStorePassword != null;
+
         ksTrust.load(
                 new FileInputStream(H2O.ARGS.h2o_ssl_trustStore),
                 H2O.ARGS.h2o_ssl_trustStorePassword.toCharArray()
@@ -38,7 +41,10 @@ public class SSLSocketChannelFactory {
 
     private KeyManager[] keyManager() throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
         KeyStore ksKeys = KeyStore.getInstance("JKS");
-        ksKeys.load(new FileInputStream(H2O.ARGS.h2o_ssl_keyStore),
+
+        assert H2O.ARGS.h2o_ssl_jks_internal != null && H2O.ARGS.h2o_ssl_keyStorePassword != null;
+
+        ksKeys.load(new FileInputStream(H2O.ARGS.h2o_ssl_jks_internal),
                 H2O.ARGS.h2o_ssl_keyStorePassword.toCharArray()
         );
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
@@ -47,7 +53,7 @@ public class SSLSocketChannelFactory {
     }
 
     public ByteChannel wrapClientChannel(
-            ByteChannel channel,
+            SocketChannel channel,
             String host,
             int port) throws IOException {
         SSLEngine sslEngine = sslContext.createSSLEngine(host, port);
@@ -55,7 +61,7 @@ public class SSLSocketChannelFactory {
         return new SSLSocketChannel(channel, sslEngine);
     }
 
-    public ByteChannel wrapServerChannel(ByteChannel channel) throws IOException {
+    public ByteChannel wrapServerChannel(SocketChannel channel) throws IOException {
         SSLEngine sslEngine = sslContext.createSSLEngine();
         sslEngine.setUseClientMode(true);
         return new SSLSocketChannel(channel, sslEngine);

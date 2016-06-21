@@ -294,17 +294,14 @@ final public class H2O {
     /** -h2o_ssl_enabled enables SSL communication */
     public boolean h2o_ssl_enabled = false;
 
-    /** -h2o_ssl_jks_internal is JavaKeyStore file on local fs used for internal SSL communication*/
-    public String h2o_ssl_jks_internal = null;
-
     /** -h2o_ssl_algorithms comma separated list of enabled cipher algorithms (ones supported by JVM) */
     public String[] h2o_ssl_enabledAlgorithms = null;
 
     /** -h2o_ssl_keyPassword password to the private key in key-store */
     public String h2o_ssl_keyPassword = null;
 
-    /** -h2o_ssl_keyStore a path (absolute or relative) to a key-store file */
-    public String h2o_ssl_keyStore = null;
+    /** -h2o_ssl_jks_internal a path (absolute or relative) to a key-store file used for internal SSL communication*/
+    public String h2o_ssl_jks_internal = null;
 
     /** -h2o_ssl_keyStorePassword a password to the key-store */
     public String h2o_ssl_keyStorePassword = null;
@@ -567,10 +564,6 @@ final public class H2O {
       else if (s.matches("h2o_ssl_keyPassword")) {
         i = s.incrementAndCheck(i, args);
         ARGS.h2o_ssl_keyPassword = args[i];
-      }
-      else if (s.matches("h2o_ssl_keyStore")) {
-        i = s.incrementAndCheck(i, args);
-        ARGS.h2o_ssl_keyStore = args[i];
       }
       else if (s.matches("h2o_ssl_keyStorePassword")) {
         i = s.incrementAndCheck(i, args);
