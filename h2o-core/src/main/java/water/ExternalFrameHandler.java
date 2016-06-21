@@ -31,7 +31,7 @@ public class ExternalFrameHandler {
         ab.getPort(); // skip 2 bytes for port set by ab.putUdp ( which is zero anyway because the request came from non-h2o node)
 
         int requestType = ab.getInt();
-        switch (requestType){
+        switch (requestType) {
             case CREATE_FRAME:
                 handleCreateFrame(ab);
                 break;
@@ -42,7 +42,7 @@ public class ExternalFrameHandler {
     }
 
 
-    private void handleDownloadFrame(AutoBuffer recvAb, SocketChannel sock){
+    private void handleDownloadFrame(AutoBuffer recvAb, SocketChannel sock) {
         String frame_key = recvAb.getStr();
         int chunk_id = recvAb.getInt();
 
@@ -57,7 +57,7 @@ public class ExternalFrameHandler {
             for (int cidx = 0; cidx < chunks.length; cidx++) { // go through the chunks
                 ab = new AutoBuffer();
                 // write flag weather the row is na or not
-                if (chunks[cidx].vec().isNA(rowIdx)) {
+                if (chunks[cidx].isNA(rowIdx)) {
                     ab.putInt(1);
                 } else {
                     ab.putInt(0);
@@ -80,7 +80,7 @@ public class ExternalFrameHandler {
         }
     }
 
-    private void handleCreateFrame(AutoBuffer ab){
+    private void handleCreateFrame(AutoBuffer ab) {
         NewChunk[] nchnk = null;
         int requestType;
         do {
@@ -119,17 +119,11 @@ public class ExternalFrameHandler {
         } while (requestType != CLOSE_NEW_CHUNK);
     }
 
-    private ByteBuffer exactSizeByteBuffer(AutoBuffer ab) {
-        ByteBuffer bb = ByteBuffer.allocate(ab.position()).order(ByteOrder.nativeOrder()).put(ab.buf(), 0, ab.position());
-        bb.flip();
-        return bb;
-    }
-
     private void writeToChannel(AutoBuffer ab, SocketChannel channel) {
-        ByteBuffer bb = exactSizeByteBuffer(ab);
         try {
-            while (bb.hasRemaining()) {
-                channel.write(bb);
+            ab._bb.flip();
+            while (ab._bb.hasRemaining()) {
+                channel.write(ab._bb);
             }
         } catch (IOException ignore) {
             //TODO: Handle this exception
@@ -147,7 +141,8 @@ public class ExternalFrameHandler {
             UUID uuid = new UUID(chks[columnNum].at16h(rowIdx), chks[columnNum].at16l(rowIdx));
             return uuid.toString();
         } else {
-            return null;
+            assert false; // should never return null
+            return null; // To make Java Compiler happy
         }
     }
 
