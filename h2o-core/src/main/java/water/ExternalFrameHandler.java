@@ -55,7 +55,7 @@ public class ExternalFrameHandler {
 
         for (int rowIdx = 0; rowIdx < chunks[0]._len; rowIdx++) { // for each row
             for (int cidx = 0; cidx < chunks.length; cidx++) { // go through the chunks
-                ab = new AutoBuffer();
+                ab.clearForWriting(H2O.MAX_PRIORITY); // reuse existing ByteBuffer
                 // write flag weather the row is na or not
                 if (chunks[cidx].isNA(rowIdx)) {
                     ab.putInt(1);
