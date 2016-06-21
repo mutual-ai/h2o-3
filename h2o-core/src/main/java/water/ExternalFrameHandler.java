@@ -52,6 +52,7 @@ public class ExternalFrameHandler {
         ab.putUdp(UDP.udp.external_frame);
         ab.putInt(chunks[0]._len); // num of rows
         writeToChannel(ab, sock);
+        ab.flipForReading();
 
         for (int rowIdx = 0; rowIdx < chunks[0]._len; rowIdx++) { // for each row
             for (int cidx = 0; cidx < chunks.length; cidx++) { // go through the chunks
