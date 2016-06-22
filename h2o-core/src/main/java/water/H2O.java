@@ -154,7 +154,27 @@ final public class H2O {
             "    -login_conf <filename>\n" +
             "          LoginService configuration file\n" +
             "\n" +
-                    // TODO add remaining autherntication/encryption documentation
+            "    -h2o_ssl_enabled\n" +
+            "          Enables SSL communication\n" +
+            "\n" +
+            "    -h2o_ssl_enabled_algorithms <algorithms>\n" +
+            "          Comma separated list of enabled cipher algorithms (ones supported by JVM).\n" +
+            "\n" +
+            "    -h2o_ssl_jks_internal <filename>\n" +
+            "          A path (absolute or relative) to a key-store file used for internal SSL communication. Overrides -jks for internal encryption.\n" +
+            "\n" +
+            "    -h2o_ssl_jks_password <password>\n" +
+            "          Password to the internal key-store.\n" +
+            "\n" +
+            "    -h2o_ssl_protocol <protocol>\n" +
+            "          SSL/TSL protocol name (supported by JVM).\n" +
+            "\n" +
+            "    -h2o_ssl_jts <filename>\n" +
+            "          A path (absolute or relative) to a trust-store file used for internal SSL communication.\n" +
+            "\n" +
+            "    -h2o_ssl_jts_password <filename>\n" +
+            "          Password to the internal trust-store.\n" +
+            "\n" +
             "Cloud formation behavior:\n" +
             "\n" +
             "    New H2O nodes join together to form a cloud at startup time.\n" +
@@ -294,26 +314,23 @@ final public class H2O {
     /** -h2o_ssl_enabled enables SSL communication */
     public boolean h2o_ssl_enabled = false;
 
-    /** -h2o_ssl_algorithms comma separated list of enabled cipher algorithms (ones supported by JVM) */
-    public String[] h2o_ssl_enabledAlgorithms = null;
-
-    /** -h2o_ssl_keyPassword password to the private key in key-store */
-    public String h2o_ssl_keyPassword = null;
+    /** -h2o_ssl_enabled_algorithms comma separated list of enabled cipher algorithms (ones supported by JVM) */
+    public String[] h2o_ssl_enabled_algorithms = null;
 
     /** -h2o_ssl_jks_internal a path (absolute or relative) to a key-store file used for internal SSL communication*/
     public String h2o_ssl_jks_internal = null;
 
-    /** -h2o_ssl_keyStorePassword a password to the key-store */
-    public String h2o_ssl_keyStorePassword = null;
+    /** -h2o_ssl_jks_password a password to the key-store */
+    public String h2o_ssl_jks_password = null;
 
     /** -h2o_ssl_protocol protocol name (supported by JVM) */
-    public String h2o_ssl_protocol = null;
+    public String h2o_ssl_protocol = "TLSv1.2";
 
-    /** -h2o_ssl_trustStore a path (absolute or relative) to a trust-store */
-    public String h2o_ssl_trustStore = null;
+    /** -h2o_ssl_jts a path (absolute or relative) to a trust-store */
+    public String h2o_ssl_jts = null;
 
-    /** -h2o_ssl_trustStorePassword a password to the trust-store */
-    public String h2o_ssl_trustStorePassword = null;
+    /** -h2o_ssl_jts_password a password to the trust-store */
+    public String h2o_ssl_jts_password = null;
 
     //-----------------------------------------------------------------------------------
     // Debugging
@@ -529,8 +546,8 @@ final public class H2O {
         i = s.incrementAndCheck(i, args);
         ARGS.jks_pass = args[i];
 
-        if(null == ARGS.h2o_ssl_keyStorePassword) {
-          ARGS.h2o_ssl_keyStorePassword = args[i];
+        if(null == ARGS.h2o_ssl_jks_password) {
+          ARGS.h2o_ssl_jks_password = args[i];
         }
       }
       else if (s.matches("hash_login")) {
@@ -557,29 +574,25 @@ final public class H2O {
         i = s.incrementAndCheck(i, args);
         ARGS.h2o_ssl_jks_internal = args[i];
       }
-      else if (s.matches("h2o_ssl_enabledAlgorithms")) {
+      else if (s.matches("h2o_ssl_enabled_algorithms")) {
         i = s.incrementAndCheck(i, args);
-        ARGS.h2o_ssl_enabledAlgorithms = args[i].split(",");
+        ARGS.h2o_ssl_enabled_algorithms = args[i].split(",");
       }
-      else if (s.matches("h2o_ssl_keyPassword")) {
+      else if (s.matches("h2o_ssl_jks_password")) {
         i = s.incrementAndCheck(i, args);
-        ARGS.h2o_ssl_keyPassword = args[i];
-      }
-      else if (s.matches("h2o_ssl_keyStorePassword")) {
-        i = s.incrementAndCheck(i, args);
-        ARGS.h2o_ssl_keyStorePassword = args[i];
+        ARGS.h2o_ssl_jks_password = args[i];
       }
       else if (s.matches("h2o_ssl_protocol")) {
         i = s.incrementAndCheck(i, args);
         ARGS.h2o_ssl_protocol = args[i];
       }
-      else if (s.matches("h2o_ssl_trustStore")) {
+      else if (s.matches("h2o_ssl_jts")) {
         i = s.incrementAndCheck(i, args);
-        ARGS.h2o_ssl_trustStore = args[i];
+        ARGS.h2o_ssl_jts = args[i];
       }
-      else if (s.matches("h2o_ssl_trustStorePassword")) {
+      else if (s.matches("h2o_ssl_jts_password")) {
         i = s.incrementAndCheck(i, args);
-        ARGS.h2o_ssl_trustStorePassword = args[i];
+        ARGS.h2o_ssl_jts_password = args[i];
       }
       else {
         parseFailed("Unknown argument (" + s + ")");
