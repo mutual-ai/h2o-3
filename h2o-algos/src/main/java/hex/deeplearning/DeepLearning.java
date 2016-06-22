@@ -186,7 +186,8 @@ public class DeepLearning extends ModelBuilder<DeepLearningModel,DeepLearningMod
   
   @Override
   protected int desiredChunks(final Frame original_fr, boolean local) {
-    return _parms._reproducible ? 1 : (int) Math.min(4 * H2O.NUMCPUS * (local ? 1 : H2O.CLOUD.size()), original_fr.numRows());
+      int nChunk = _parms._reproducible ? 1 : (int) Math.min(4 * H2O.NUMCPUS * (local ? 1 : H2O.CLOUD.size()), original_fr.numRows());
+      return Math.min(nChunk, (int) original_fr.numRows() / _parms._batch_size);
   }
 
   public class DeepLearningDriver extends Driver {

@@ -174,6 +174,8 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
      *  avoid printing extremely large confusion matrices.  */
     public int _max_confusion_matrix_size = 20;
 
+    public int _batch_size = 20;
+
     /**
      * A model key associated with a previously trained Deep Learning
      * model. This option allows users to build a new model as a
