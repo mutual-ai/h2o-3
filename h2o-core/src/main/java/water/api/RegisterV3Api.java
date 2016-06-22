@@ -356,7 +356,7 @@ public class RegisterV3Api extends AbstractRegister {
         "GET /3/KillMinus3", KillMinus3Handler.class, "killm3",
         "Kill minus 3 on *this* node");
 
-    RequestServer.registerEndpoint("_rapids_exec",
+    RequestServer.registerEndpoint("rapids",
         "POST /99/Rapids", RapidsHandler.class, "exec",
         "Execute an Rapids AST.");
 
