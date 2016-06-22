@@ -27,7 +27,7 @@ public class ExternalFrameHandler {
     public static final int TYPE_STR = 2;
     public static final int TYPE_NA = 3;
 
-    public static void process(AutoBuffer ab, SocketChannel sock) {
+    public void process(AutoBuffer ab, SocketChannel sock) {
         // skip 2 bytes for port set by ab.putUdp. The port is
         // is zero anyway because the request came from non-h2o node and zero is default value
         ab.getPort();
@@ -44,7 +44,7 @@ public class ExternalFrameHandler {
     }
 
 
-    private static void handleDownloadFrame(AutoBuffer recvAb, SocketChannel sock) {
+    private void handleDownloadFrame(AutoBuffer recvAb, SocketChannel sock) {
         String frame_key = recvAb.getStr();
         int chunk_id = recvAb.getInt();
 
@@ -83,7 +83,7 @@ public class ExternalFrameHandler {
         }
     }
 
-    private static void handleCreateFrame(AutoBuffer ab) {
+    private void handleCreateFrame(AutoBuffer ab) {
         NewChunk[] nchnk = null;
         int requestType;
         do {
@@ -122,7 +122,7 @@ public class ExternalFrameHandler {
         } while (requestType != CLOSE_NEW_CHUNK);
     }
 
-    private static void writeToChannel(AutoBuffer ab, SocketChannel channel) {
+    private void writeToChannel(AutoBuffer ab, SocketChannel channel) {
         try {
             ab._bb.flip();
             while (ab._bb.hasRemaining()) {
@@ -133,7 +133,7 @@ public class ExternalFrameHandler {
         }
     }
 
-    private static String getStringFromChunk(Chunk[] chks, int columnNum, int rowIdx) {
+    private String getStringFromChunk(Chunk[] chks, int columnNum, int rowIdx) {
         if (chks[columnNum].vec().isCategorical()) {
             return chks[columnNum].vec().domain()[(int) chks[columnNum].at8(rowIdx)];
         } else if (chks[columnNum].vec().isString()) {
