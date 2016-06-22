@@ -70,6 +70,8 @@ public abstract class FrameTask<T extends FrameTask<T>> extends MRTask<T>{
   // mini-batch version - for DL only for now
   protected void processRow(long gid, DataInfo.Row r, int mb){throw new RuntimeException("should've been overridden!");}
 
+  protected void processRow(long gid, DataInfo.Row[] r, int mb){throw new RuntimeException("should've been overridden!");}
+
   /**
    * Mini-Batch update of model parameters
    * @param seed
