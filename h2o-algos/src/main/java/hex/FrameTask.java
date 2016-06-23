@@ -79,13 +79,13 @@ public abstract class FrameTask<T extends FrameTask<T>> extends MRTask<T>{
    * @param offsets
    * @param n actual number of rows in this minibatch
    */
-  protected void processMiniBatch(long seed, double[] responses, double[] offsets, int n){}
+  protected void processMiniBatch(long seed, float[] responses, double[] offsets, int n){}
 
   /**
    * Note: If this is overridden, then applyMiniBatch must be overridden as well to perform the model/weight mini-batch update
    * @return Return the mini-batch size
    */
-  protected int getMiniBatchSize(){ return 0; }
+  protected int getMiniBatchSize(){ return 20; }
 
   /**
    * Override this to initialize at the beginning of chunk processing.
@@ -115,10 +115,12 @@ public abstract class FrameTask<T extends FrameTask<T>> extends MRTask<T>{
 
     DataInfo.Row row = null;
     DataInfo.Row[] rows = null;
+
     if (_sparse)
       rows = _dinfo.extractSparseRows(chunks);
     else
       row = _dinfo.newDenseRow();
+
     double[] weight_map = null;
     double relative_chunk_weight = 1;
     //TODO: store node-local helper arrays in _dinfo -> avoid re-allocation and construction
@@ -156,11 +158,11 @@ public abstract class FrameTask<T extends FrameTask<T>> extends MRTask<T>{
       ArrayUtils.shuffleArray(shufIdx, skip_rng);
     }
 
-    double[] responses = new double[getMiniBatchSize()];
+    float[] responses = new float[getMiniBatchSize()];
     double[] offsets   = new double[getMiniBatchSize()];
 
     long seed = 0;
-    final int miniBatchSize = getMiniBatchSize();
+    int miniBatchSize = getMiniBatchSize();
     long num_processed_rows = 0;
     long num_skipped_rows = 0;
     int miniBatchCounter = 0;
@@ -190,6 +192,7 @@ public abstract class FrameTask<T extends FrameTask<T>> extends MRTask<T>{
         assert(r >= 0 && r<=nrows);
 
         row = _sparse ? rows[r] : _dinfo.extractDenseRow(chunks, r, row);
+
         if(row.isBad() || row.weight == 0) {
           num_skipped_rows++;
           continue;
@@ -203,7 +206,7 @@ public abstract class FrameTask<T extends FrameTask<T>> extends MRTask<T>{
           else {
             if (miniBatchSize > 0) { //DL
               processRow(seed, row, miniBatchCounter);
-              responses[miniBatchCounter] = row.response != null && row.response.length > 0 ? row.response(0) : 0 /*autoencoder dummy*/;
+              responses[miniBatchCounter] = row.response != null && row.response.length > 0 ? (float) row.response(0) : 0 /*autoencoder dummy*/;
               offsets[miniBatchCounter] = row.offset;
               miniBatchCounter++;
             }
@@ -212,7 +215,7 @@ public abstract class FrameTask<T extends FrameTask<T>> extends MRTask<T>{
           }
         }
         num_processed_rows++;
-        if (miniBatchCounter > 0 && miniBatchCounter % miniBatchSize == 0) {
+        if (miniBatchCounter == miniBatchSize) {
           processMiniBatch(seed, responses, offsets, miniBatchCounter);
           miniBatchCounter = 0;
         }

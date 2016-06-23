@@ -6,19 +6,30 @@ import hex.FrameTask;
 import water.DKV;
 import water.H2O;
 import water.Key;
+import water.gpu.MLPNative;
 import water.util.Log;
 import water.util.RandomUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
 public class DeepLearningTask extends FrameTask<DeepLearningTask> {
+
+  static {
+    System.loadLibrary("mlp");
+  }
+
   final private boolean _training;
   private DeepLearningModelInfo _localmodel; //per-node state (to be reduced)
   private DeepLearningModelInfo _sharedmodel; //input/output
-  transient Neurons[] _neurons;
+  //transient Neurons[] _neurons;
   transient Random _dropout_rng;
+  transient MLPNative _mlp;
   int _chunk_node_count = 1;
+  transient Storage.DenseVector data;
+  //private float[] label;
+
 
   /**
    * Accessor to the object containing the (final) state of the Deep Learning model
@@ -85,7 +96,10 @@ public class DeepLearningTask extends FrameTask<DeepLearningTask> {
   @Override protected boolean chunkInit(){
     if (_localmodel.get_processed_local() >= _useFraction * _fr.numRows())
       return false;
-    _neurons = makeNeuronsForTraining(_localmodel);
+    _mlp = new MLPNative();
+
+    data = new Storage.DenseVector(40);
+    //_neurons = makeNeuronsForTraining(_localmodel);
     _dropout_rng = RandomUtils.getRNG(System.currentTimeMillis());
     return true;
   }
@@ -97,13 +111,18 @@ public class DeepLearningTask extends FrameTask<DeepLearningTask> {
    * @param mb mini-batch internal index
    */
   @Override public final void processRow(long seed, DataInfo.Row r, int mb) {
+
     if (_localmodel.get_params()._reproducible) {
       seed += _localmodel.get_processed_global(); //avoid periodicity
     } else {
       seed = _dropout_rng.nextLong(); // non-reproducible case - make a fast & good random number
     }
     _localmodel.checkMissingCats(r.binIds);
-    ((Neurons.Input) _neurons[0]).setInput(seed, r.isSparse() ? r.numIds : null, r.numVals, r.nBins, r.binIds, mb);
+    System.out.println("r.get: " + r.get(0) + " " + r.get(1) + " " + r.numVals.length * mb);
+    for (int i = 0; i < r.numVals.length; i++) {
+      data.set((r.numVals.length - 1) * mb, r.get(i));
+    }
+    //((Neurons.Input) _neurons[0]).setInput(seed, r.isSparse() ? r.numIds : null, r.numVals, r.nBins, r.binIds, mb);
   }
 
   /**
@@ -113,15 +132,23 @@ public class DeepLearningTask extends FrameTask<DeepLearningTask> {
    * @param offsets
    * @param n number of trained examples in this last mini batch (usually == mini_batch_size, but can be less)
    */
-  @Override public void processMiniBatch(long seed, double[] responses, double[] offsets, int n) {
+  @Override public void processMiniBatch(long seed, float[] responses, double[] offsets, int n) {
     assert(_training);
     if (_localmodel.get_params()._reproducible) {
       seed += _localmodel.get_processed_global(); //avoid periodicity
     } else {
       seed = _dropout_rng.nextLong(); // non-reproducible case - make a fast & good random number
     }
-    fpropMiniBatch(seed, _neurons, _localmodel, _localmodel.get_params()._elastic_averaging ? _sharedmodel : null, _training, responses, offsets, n);
-    bpropMiniBatch(_neurons, n);
+
+    float[] tmp = new float[data.size()];
+    for (int i = 0; i < data.size(); i++) {
+      tmp[i] = (float) data.raw()[i];
+    }
+    _mlp.setData(tmp, 2, 20);
+    _mlp.setLabel(responses, responses.length);
+    _mlp.train();
+    //fpropMiniBatch(seed, _neurons, _localmodel, _localmodel.get_params()._elastic_averaging ? _sharedmodel : null, _training, responses, offsets, n);
+    //bpropMiniBatch(_neurons, n);
   }
 
   /**

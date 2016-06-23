@@ -1053,6 +1053,15 @@ public class DataInfo extends Keyed<DataInfo> {
   }
   public Rows rows(Chunk [] chks, boolean sparse) {return new Rows(chks,sparse);}
 
+  public final Row[] extractDenseRows(Chunk [] chunks) {
+    Row[] rows = new Row[chunks[0]._len];
+    for (int i = 0; i < rows.length;i++ ){
+      double[] data = {chunks[0].atd(i), chunks[1].atd(i)};
+      rows[i] = new Row(data);
+    }
+    return rows;
+  }
+
   /**
    * Extract (sparse) rows from given chunks.
    * Note: 0 remains 0 - _normSub of DataInfo isn't used (mean shift during standarization is not reverted) - UNLESS offset is specified (for GLM only)
